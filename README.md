@@ -23,30 +23,16 @@ The Kubernetes cluster is composed of modular, production-grade components, each
 
 ---
 
-## 🖥️ Infrastructure Layout
-
-Example of an architecture layout of a Kubernetes layout with 5 nodes.
-
-| VMs/Nodes | SSH Hostname | Role          | External Access                      |
-| ---- | -------- | ------------- | ------------------------------------ |
-| o1   | `o1u`     | Control Plane | ✅ SSH (port 22) from cockpit VM only |
-| o2   | `o2a`     | Worker Node   | ❌ No direct external access          |
-| o3   | `o3r`     | Worker Node   | ❌ No direct external access          |
-| o4   | `o4d`     | Worker Node   | ❌ No direct external access          |
-| o5  | `o5f`     | Worker Node   | ❌ No direct external access          |
-
-* Nodes are provisioned as VMs on **OVH**
-* Full **internal network communication** is permitted between all nodes
-
----
 
 # Access and Security Model
 
 ## Host-Level Security
 
-* **nftables** is configured on each node
-* Only `o1` (control plane) is accessible externally, restricted to SSH (port 22)
-* Worker nodes are **fully isolated** from external networks
+- **nftables** is configured on each node
+- Only the control plane is accessible externally, restricted to SSH (port 22)
+- Worker nodes are **fully isolated** from external networks
+- Full **internal network communication** is permitted between all nodes
+
 
 ## External Access Security strategy
 
@@ -54,8 +40,8 @@ The cluster follows a **controlled and minimal exposure** model for external acc
 
 - **SSH Access**
 
-  - Only the **control plane**  (node `o1`) is accessible via **SSH (port 22)** from the trusted **cockpit VM**.
-  - **Worker nodes** (`o2` .. `o5`))** have **no SSH access** from outside.
+  - Only the **control plane** is accessible via **SSH (port 22)** from the trusted **cockpit VM**.
+  - **Worker nodes** have **no SSH access** from outside.
 
 - **Ingress Access**
 
@@ -65,13 +51,13 @@ The cluster follows a **controlled and minimal exposure** model for external acc
 
 - **General External Access**
 
-  * No other public-facing services or ports are exposed.
-  * **Worker nodes** have **no direct internet access**, except for the controlled ingress on port `8443`.
+  - No other public-facing services or ports are exposed.
+  - **Worker nodes** have **no direct internet access**, except for the controlled ingress on port `8443`.
 
 
 ---
 
-# Cluster Initialization (`kubeadm`)
+# Cluster Initialization
 
 The cluster is bootstrapped using `kubeadm` with explicitly defined **Pod** and **Service** custom CIDRs for enhanced network control:
 
@@ -96,8 +82,18 @@ This section documents the **operating systems**, **kernel versions**, **tooling
 
 ## Tested Operating Systems
 
-The Kubernetes cluster was tested on the following Linux distributions and kernel versions:
+- The Kubernetes cluster infrastructure Layout is build on 5 nodes (**VPSs** on the OVH public cloud).
 
+| VMs/Nodes | SSH Hostname | Role          | External Access|
+| ---- | -------- | ------------- | ------------------------------------ |
+| o1   | `o1u`     | Control Plane | ✅ SSH (port 22) from cockpit VM only |
+| o2   | `o2a`     | Worker Node   | ❌ No direct external access          |
+| o3   | `o3r`     | Worker Node   | ❌ No direct external access          |
+| o4   | `o4d`     | Worker Node   | ❌ No direct external access          |
+| o5  | `o5f`     | Worker Node   | ❌ No direct external access          |
+
+
+- The Kubernetes cluster was tested on the following Linux distributions and kernel versions:
 
 | VM/Node    | OS Family | Distro     | Version | Kernel Version                          |
 |-------|-----------|------------|---------|------------------------------------------|
@@ -136,12 +132,6 @@ The table below summarize the Kubernetes cluster component, setup and init confi
 | Control Plane  | `o1`             |
 | Worker Nodes        | `o2` ... `o5`|
 | External Entrypoint | Cockpit VM → `o1` (SSH) |
-
-
-
-
-
-
 
 
 ---
