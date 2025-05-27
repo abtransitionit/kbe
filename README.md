@@ -23,7 +23,22 @@ The Kubernetes cluster is composed of modular, production-grade components, each
 
 ---
 
+## 🖥️ Infrastructure Layout
 
+Example of an architecture layout of a Kubernetes layout with 5 nodes.
+
+| VMs/Nodes | SSH Hostname | Role          | External Access                      |
+| ---- | -------- | ------------- | ------------------------------------ |
+| o1   | `o1u`     | Control Plane | ✅ SSH (port 22) from cockpit VM only |
+| o2   | `o2a`     | Worker Node   | ❌ No direct external access          |
+| o3   | `o3r`     | Worker Node   | ❌ No direct external access          |
+| o4   | `o4d`     | Worker Node   | ❌ No direct external access          |
+| o4   | `o5f`     | Worker Node   | ❌ No direct external access          |
+
+* Nodes are provisioned as VMs on **OVH**
+* Full **internal network communication** is permitted between all nodes
+
+---
 
 # Access and Security Model
 
@@ -56,7 +71,6 @@ The cluster follows a **controlled and minimal exposure** model for external acc
 
 ---
 
-
 # Cluster Initialization (`kubeadm`)
 
 The cluster is bootstrapped using `kubeadm` with explicitly defined **Pod** and **Service** custom CIDRs for enhanced network control:
@@ -74,6 +88,60 @@ Benefits of this setup:
 - Avoids conflicts with default network ranges on external systems
 
 ---
+
+# Test Environment
+
+This section documents the **operating systems**, **kernel versions**, **tooling**, and **core configuration** used to validate the cluster.  It ensures transparency, reproducibility, and provides a reference baseline for future deployments.
+
+
+## Tested Operating Systems
+
+The Kubernetes cluster was tested on the following Linux distributions and kernel versions:
+
+
+| VM/Node    | OS Family | Distro     | Version | Kernel Version                          |
+|-------|-----------|------------|---------|------------------------------------------|
+| o1u   | Debian    | Ubuntu     | 24.10   | 6.11.0-25-generic                         |
+| o2a   | RHEL      | AlmaLinux  | 9.5     | 5.14.0-503.40.1.el9_5.x86_64              |
+| o3r   | RHEL      | Rocky      | 9.5     | 5.14.0-503.40.1.el9_5.x86_64              |
+| o4d   | Debian    | Debian     | 12.10   | 6.1.0-34-cloud-amd64                      |
+| o6f   | Fedora    | Fedora     | 40      | 6.14.5-100.fc40.x86_64                    |
+
+
+## Tooling Versions
+
+The Kubernetes cluster was deployed and verified using the following tool versions to ensure compatibility and stability across components:
+
+
+| Tool / Component                  | Version   | Notes                                                                 |
+|----------------------------------|-----------|-----------------------------------------------------------------------|
+| Kubernetes                       | `1.32.0`  | Main cluster version                                                  |
+| CRI-O (via `dnf`/`apt`)          | `v1.32`   | Matches Kubernetes major/minor version                                |
+| Cilium (Helm chart)              | `1.17`    | Compatible with Kubernetes `1.32.x` – `1.33.x`                         |
+| Ingress NGINX (Helm chart)       | `4.12`    | Stable release for Kubernetes `1.32+`; deployed in NodePort mode      |
+
+
+## Additional setup Configuration
+
+The table below summarize the Kubernetes cluster component, setup and init configuration:
+
+| Feature             | Value                           |
+| ------------------- |---------------------------------|
+| Runtime             | CRI-O                   |
+| CNI Plugin          | Cilium                  |
+| Ingress             | NGINX (NodePort)        |
+| Firewall            | nftables                |
+| Pod CIDR            | `192.168.0.0/16` |
+| Service CIDR        | `172.16.0.0/16`  |
+| Control Plane Host  | `o1`             |
+| Worker Nodes        | `o2`, `o3`, `o4` |
+| External Entrypoint | Cockpit VM → `o1` (SSH) |
+
+
+
+
+
+
 
 
 ---
@@ -107,6 +175,25 @@ Track version updates and changes:
 - **📦 Latest Release**: `vX.X.X` ([GitHub Releases](#))  
 - **📄 Full Changelog**: See [CHANGELOG.md](CHANGELOG.md) for detailed version history.  
 
----
-----
+## Future Enhancements
+
+* [ ] Introduce a **LoadBalancer** (e.g., MetalLB or external reverse proxy)
+* [ ] **Deploy MetalLB** as the preferred LoadBalancer solution for internal and external service exposure, enabling more robust and flexible ingress patterns.
+* [ ] Fine-tune firewall rules to allow only essential inter-node ports
+* [ ] **Fine-tune firewall rules** to:
+
+  * Allow **only essential ports** for **Kubernetes control**, **Cilium**, and **ingress** communication between nodes.
+  * **Explicitly block all other inter-node traffic**, even internally.
+  * Follow **Cilium’s best practices** to permit only necessary ports such as:
+
+    * `TCP 6443`: Kubernetes API
+    * `TCP/UDP 8472`: VXLAN (if in use)
+    * `TCP 2379-2380`: etcd (control plane)
+    * `TCP 8443`: ingress controller
+* [ ] **Harden ingress exposure**:
+
+  * Public access is restricted to **port `8443`** only, across **all nodes**.
+  * This port is required since **ingress pods may run on any node**.
+  * All other ports are **firewalled externally** and internally, unless explicitly required.
+* [ ] Enable **TLS termination** at the ingress layer for secure HTTP(S)
 
