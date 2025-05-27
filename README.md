@@ -33,7 +33,7 @@ Example of an architecture layout of a Kubernetes layout with 5 nodes.
 | o2   | `o2a`     | Worker Node   | ❌ No direct external access          |
 | o3   | `o3r`     | Worker Node   | ❌ No direct external access          |
 | o4   | `o4d`     | Worker Node   | ❌ No direct external access          |
-| o4   | `o5f`     | Worker Node   | ❌ No direct external access          |
+| o5  | `o5f`     | Worker Node   | ❌ No direct external access          |
 
 * Nodes are provisioned as VMs on **OVH**
 * Full **internal network communication** is permitted between all nodes
@@ -133,8 +133,8 @@ The table below summarize the Kubernetes cluster component, setup and init confi
 | Firewall            | nftables                |
 | Pod CIDR            | `192.168.0.0/16` |
 | Service CIDR        | `172.16.0.0/16`  |
-| Control Plane Host  | `o1`             |
-| Worker Nodes        | `o2`, `o3`, `o4` |
+| Control Plane  | `o1`             |
+| Worker Nodes        | `o2` ... `o5`|
 | External Entrypoint | Cockpit VM → `o1` (SSH) |
 
 
